@@ -1,6 +1,6 @@
 """Helpers to enrich OpenTelemetry spans with rapid.* attributes.
 
-The Observatory ingest pipeline reads these attributes from incoming OTLP
+The Debug Engine ingest pipeline reads these attributes from incoming OTLP
 spans to stitch traces back to the agent registry. Without them, spans
 arrive as orphans and can only be grouped by service name.
 
@@ -40,9 +40,9 @@ def enrich_span(
     Safe to call from anywhere in the request path. Silently no-ops if
     OpenTelemetry is not installed or there is no active span.
 
-    `agent_id` is the server-assigned Observatory cuid. If you don't have
+    `agent_id` is the server-assigned Debug Engine cuid. If you don't have
     that handy in the route handler, pass `agent_category` + `agent_name`
-    instead — the Observatory mapper resolves them at ingest time using
+    instead — the Debug Engine mapper resolves them at ingest time using
     the (deployment_id, service_name, category, name) registry tuple.
     """
     if not _otel_available or _otel_trace is None:
@@ -83,7 +83,7 @@ def set_trace_agent_context(
     """Convenience: set the minimum trace-level context for an agent invocation.
 
     Called from the top of an agent route handler to ensure every child span
-    in the request inherits the identifiers the Observatory needs.
+    in the request inherits the identifiers the Debug Engine needs.
     """
     enrich_span(
         agent_id=agent_id,

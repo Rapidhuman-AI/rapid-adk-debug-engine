@@ -1,7 +1,7 @@
-# rapid-observatory-sdk
+# rapid-debug-engine-sdk
 
 Python SDK installed into `rapid-adk-requirements` and `rapid-adk-transformation` so
-the AI Agent Observatory can monitor Google ADK agents running in those services.
+the Rapid Debug Engine can monitor Google ADK agents running in those services.
 
 ## What it does
 
@@ -10,10 +10,10 @@ the AI Agent Observatory can monitor Google ADK agents running in those services
 2. **Config hot-reload** *(M4)* — Pub/Sub subscriber swaps configs in memory in <5s.
 3. **`@shadow_aware`** *(M7)* — Dual-invokes candidate configs per shadow experiment.
 4. **`enrich_span`** *(M3)* — Adds `rapid.module_id`, `rapid.screen_id`, `rapid.agent_id`
-   attributes to the current OpenTelemetry span so the Observatory mapper can stitch
+   attributes to the current OpenTelemetry span so the Debug Engine mapper can stitch
    traces to the agent registry.
 5. **Guardrail event publisher** *(M8)* — Ships Pydantic validation outcomes to the
-   Observatory so they surface in the Guardrails screens.
+   Debug Engine so they surface in the Guardrails screens.
 
 ## Minimal integration (M1 scope only)
 
@@ -21,20 +21,20 @@ the AI Agent Observatory can monitor Google ADK agents running in those services
 # main.py lifespan
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from rapid_observatory import ObservatoryClient
+from rapid_debug_engine import DebugEngineClient
 
-observatory = ObservatoryClient(
+debug_engine = DebugEngineClient(
     base_url="http://localhost:8080",
-    api_key="dev-observatory-key",
+    api_key="dev-debug-engine-key",
     deployment_id="acme",
     service_name="rapid-adk-requirements",
 )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await observatory.register_on_startup()
+    await debug_engine.register_on_startup()
     yield
-    await observatory.stop()
+    await debug_engine.stop()
 
 app = FastAPI(lifespan=lifespan)
 ```
@@ -42,5 +42,5 @@ app = FastAPI(lifespan=lifespan)
 ## Local install
 
 ```bash
-pip install -e ../rapid-agent-observatory/observability-sdk-python
+pip install -e ../rapid-debug-engine/observability-sdk-python
 ```

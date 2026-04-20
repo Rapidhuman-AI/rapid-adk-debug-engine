@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from rapid_observatory.shadow import (
+from rapid_debug_engine.shadow import (
     ShadowExperimentContext,
     set_active_experiment,
     shadow_aware,

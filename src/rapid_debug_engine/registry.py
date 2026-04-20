@@ -11,7 +11,7 @@ Mirrors the structure the Python agent services use in `agentconfig/agents/<cate
 
 And the optional `agentconfig/modules.json` file which declares the
 Module → Screen → Agent hierarchy. When present, its mapping is authoritative
-(unmapped agents fall back to UI authoring in the Observatory).
+(unmapped agents fall back to UI authoring in the Debug Engine).
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ DEFAULT_MAX_TOKENS = 2048
 
 @dataclass
 class AgentRegistration:
-    """One agent discovered on disk, ready to POST to the Observatory."""
+    """One agent discovered on disk, ready to POST to the Debug Engine."""
 
     category: str
     name: str
@@ -91,11 +91,11 @@ def _hash_config(config: dict[str, Any]) -> str:
 
 
 def _extract_config(raw: dict[str, Any]) -> dict[str, Any]:
-    """Normalize the agent JSON into the Observatory AgentConfig shape.
+    """Normalize the agent JSON into the Debug Engine AgentConfig shape.
 
-    The Python services' JSON shape predates the Observatory, so we map
+    The Python services' JSON shape predates the Debug Engine, so we map
     loosely and fill in the rest with defaults. Whatever is stored becomes
-    the v1 config for this agent in the Observatory.
+    the v1 config for this agent in the Debug Engine.
     """
     prompt = raw.get("system_message", "")
     output_structure = raw.get("outputstructure")
@@ -120,7 +120,7 @@ def discover_agents(
 ) -> list[AgentRegistration]:
     """Walk agentconfig/agents/<category>/<name>.json and build the registration list."""
     if not agentconfig_dir.exists():
-        logger.warning("observatory: agentconfig directory not found: %s", agentconfig_dir)
+        logger.warning("debug_engine: agentconfig directory not found: %s", agentconfig_dir)
         return []
 
     modules = ModulesFile.load(modules_file) if modules_file else ModulesFile()
@@ -132,7 +132,7 @@ def discover_agents(
             try:
                 raw = json.loads(json_file.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as err:
-                logger.warning("observatory: skipping %s: %s", json_file, err)
+                logger.warning("debug_engine: skipping %s: %s", json_file, err)
                 continue
 
             name = raw.get("name", json_file.stem)
@@ -153,5 +153,5 @@ def discover_agents(
                 )
             )
 
-    logger.info("observatory: discovered %d agents in %s", len(registrations), agentconfig_dir)
+    logger.info("debug_engine: discovered %d agents in %s", len(registrations), agentconfig_dir)
     return registrations

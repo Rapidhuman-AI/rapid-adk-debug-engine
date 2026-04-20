@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from rapid_observatory.registry import ModulesFile, discover_agents
+from rapid_debug_engine.registry import ModulesFile, discover_agents
 
 
 def _write_agent(path: Path, name: str, system_message: str = "default") -> None:

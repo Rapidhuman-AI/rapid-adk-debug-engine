@@ -1,4 +1,4 @@
-"""Tests for ObservatoryMiddleware — verifies route → agent id resolution.
+"""Tests for Debug EngineMiddleware — verifies route → agent id resolution.
 
 The middleware degrades gracefully when no OpenTelemetry SDK is installed
 (tags.py enrichment functions become no-ops), so we only need to assert the
@@ -12,11 +12,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from rapid_observatory.middleware import ObservatoryMiddleware
+from rapid_debug_engine.middleware import Debug EngineMiddleware
 
 
 class FakeClient:
-    """Stand-in for ObservatoryClient — just enough surface for the middleware."""
+    """Stand-in for DebugEngineClient — just enough surface for the middleware."""
 
     def __init__(self) -> None:
         self._lookup: dict[tuple[str, str], str] = {}
@@ -34,7 +34,7 @@ def test_resolve_agent_from_named_capture() -> None:
     client = FakeClient()
     client.set("requirements", "apis", "agt_123")
 
-    middleware = ObservatoryMiddleware(
+    middleware = Debug EngineMiddleware(
         app=MagicMock(),
         client=client,  # type: ignore[arg-type]
         route_map={
@@ -48,7 +48,7 @@ def test_resolve_agent_from_named_capture() -> None:
 
 def test_resolve_agent_explicit_name_override() -> None:
     client = FakeClient()
-    middleware = ObservatoryMiddleware(
+    middleware = Debug EngineMiddleware(
         app=MagicMock(),
         client=client,  # type: ignore[arg-type]
         route_map={
@@ -60,7 +60,7 @@ def test_resolve_agent_explicit_name_override() -> None:
 
 
 def test_resolve_agent_returns_none_for_unmatched_paths() -> None:
-    middleware = ObservatoryMiddleware(
+    middleware = Debug EngineMiddleware(
         app=MagicMock(),
         client=FakeClient(),  # type: ignore[arg-type]
         route_map={
@@ -71,13 +71,13 @@ def test_resolve_agent_returns_none_for_unmatched_paths() -> None:
 
 
 def test_lazy_import_of_middleware_from_package() -> None:
-    """Importing ObservatoryMiddleware from the package root must not fail
+    """Importing Debug EngineMiddleware from the package root must not fail
     just because starlette wasn't needed. This exercises the __getattr__
     shim in __init__.py."""
-    import rapid_observatory
+    import rapid_debug_engine
 
-    attr = rapid_observatory.ObservatoryMiddleware
-    assert attr is ObservatoryMiddleware
+    attr = rapid_debug_engine.Debug EngineMiddleware
+    assert attr is Debug EngineMiddleware
 
     with pytest.raises(AttributeError):
-        rapid_observatory.DoesNotExist  # type: ignore[attr-defined]
+        rapid_debug_engine.DoesNotExist  # type: ignore[attr-defined]

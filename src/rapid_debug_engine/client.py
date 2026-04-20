@@ -1,4 +1,4 @@
-"""ObservatoryClient — the public surface the agent services use."""
+"""DebugEngineClient — the public surface the agent services use."""
 
 from __future__ import annotations
 
@@ -17,20 +17,20 @@ DEFAULT_AGENTCONFIG_DIR = Path("agentconfig/agents")
 DEFAULT_MODULES_FILE = Path("agentconfig/modules.json")
 
 
-class ObservatoryClient:
-    """Async client for the AI Agent Observatory REST API.
+class DebugEngineClient:
+    """Async client for the Rapid Debug Engine REST API.
 
     Usage (M1 scope):
 
-        observatory = ObservatoryClient(
+        debug_engine = DebugEngineClient(
             base_url="http://localhost:8080",
             api_key="...",
             deployment_id="acme",
             service_name="rapid-adk-requirements",
         )
-        await observatory.register_on_startup()
+        await debug_engine.register_on_startup()
         ...
-        await observatory.stop()
+        await debug_engine.stop()
 
     M4 adds `start_config_sync`, M7 adds `get_shadow_experiment`, M8 adds
     `record_guardrail_event`. Their stubs are included below so the import
@@ -89,7 +89,7 @@ class ObservatoryClient:
     ) -> list[dict[str, Any]]:
         """Walk the agent config directory and POST to /api/v1/agents/register.
 
-        Idempotent: safe to call on every boot. The Observatory upserts by
+        Idempotent: safe to call on every boot. The Debug Engine upserts by
         (deployment_id, service_name, category, name) and only creates a new
         immutable AgentConfig version when configHash changes.
 
@@ -97,7 +97,7 @@ class ObservatoryClient:
         """
         registrations = discover_agents(agentconfig_dir, modules_file)
         if not registrations:
-            logger.warning("observatory: no agents discovered — nothing to register")
+            logger.warning("debug_engine: no agents discovered — nothing to register")
             return []
 
         payload = self._build_registration_payload(registrations)
@@ -106,7 +106,7 @@ class ObservatoryClient:
             response = await self._http.post("/api/v1/agents/register", json=payload)
             response.raise_for_status()
         except httpx.HTTPError as err:
-            logger.error("observatory: registration failed: %s", err)
+            logger.error("debug_engine: registration failed: %s", err)
             return []
 
         data = response.json()
@@ -116,7 +116,7 @@ class ObservatoryClient:
             self._agent_id_cache[key] = agent["id"]
 
         logger.info(
-            "observatory: registered %d agents with deployment=%s service=%s",
+            "debug_engine: registered %d agents with deployment=%s service=%s",
             len(agents),
             self._deployment_id,
             self._service_name,
@@ -151,7 +151,7 @@ class ObservatoryClient:
             poll_interval_s=poll_interval_s,
         )
         await self._sync_worker.start()
-        logger.info("observatory: config sync started (long-poll)")
+        logger.info("debug_engine: config sync started (long-poll)")
 
     def get_active_config_override(
         self, category: str, name: str
@@ -210,12 +210,12 @@ class ObservatoryClient:
             response = await self._http.post("/api/v1/ingest/guardrails", json=payload)
             if response.status_code >= 400:
                 logger.debug(
-                    "observatory: guardrail ingest returned %s: %s",
+                    "debug_engine: guardrail ingest returned %s: %s",
                     response.status_code,
                     response.text[:200],
                 )
         except Exception as err:  # noqa: BLE001 — must never raise in hot path
-            logger.debug("observatory: guardrail ingest failed: %s", err)
+            logger.debug("debug_engine: guardrail ingest failed: %s", err)
 
     async def stop(self) -> None:
         """Clean shutdown. Call from FastAPI lifespan teardown."""

@@ -89,7 +89,7 @@ class ConfigSyncWorker:
         if self._task is not None:
             return
         self._stop.clear()
-        self._task = asyncio.create_task(self._run(), name="observatory-config-sync")
+        self._task = asyncio.create_task(self._run(), name="debug-engine-config-sync")
 
     async def stop(self) -> None:
         self._stop.set()
@@ -105,7 +105,7 @@ class ConfigSyncWorker:
             try:
                 await self._poll_once()
             except Exception as err:  # noqa: BLE001 — long-poll loop must never die
-                logger.warning("observatory: config sync poll failed: %s", err)
+                logger.warning("debug_engine: config sync poll failed: %s", err)
             try:
                 await asyncio.wait_for(self._stop.wait(), timeout=self._poll_interval_s)
             except asyncio.TimeoutError:
@@ -121,7 +121,7 @@ class ConfigSyncWorker:
             },
         )
         if response.status_code != 200:
-            logger.debug("observatory: config sync returned %s", response.status_code)
+            logger.debug("debug_engine: config sync returned %s", response.status_code)
             return
         data = response.json()
         events = data.get("events", [])
@@ -138,7 +138,7 @@ class ConfigSyncWorker:
             )
             self._registry.set(override)
             logger.info(
-                "observatory: applied config v%d for %s/%s (promoted by %s)",
+                "debug_engine: applied config v%d for %s/%s (promoted by %s)",
                 override.version,
                 override.category,
                 override.name,

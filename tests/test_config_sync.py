@@ -9,7 +9,7 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from rapid_observatory.config_sync import (
+from rapid_debug_engine.config_sync import (
     AgentConfigRegistry,
     ConfigSyncWorker,
 )
@@ -36,18 +36,18 @@ async def test_sync_worker_applies_promotion_events_to_registry(httpx_mock: HTTP
     }
     httpx_mock.add_response(
         method="GET",
-        url=httpx.URL("http://observatory/api/v1/configs/sync", params={}),
+        url=httpx.URL("http://debug-engine/api/v1/configs/sync", params={}),
         json={"events": [event], "cursor": "2026-04-10T10:00:00Z"},
         match_headers={},
     )
     # Subsequent polls during the worker lifetime get no events.
     httpx_mock.add_response(
         method="GET",
-        url=httpx.URL("http://observatory/api/v1/configs/sync", params={}),
+        url=httpx.URL("http://debug-engine/api/v1/configs/sync", params={}),
         json={"events": [], "cursor": "2026-04-10T10:00:00Z"},
     )
 
-    http = httpx.AsyncClient(base_url="http://observatory")
+    http = httpx.AsyncClient(base_url="http://debug-engine")
     registry = AgentConfigRegistry()
     worker = ConfigSyncWorker(
         http=http,
@@ -80,16 +80,16 @@ async def test_sync_worker_survives_http_errors(httpx_mock: HTTPXMock) -> None:
     # First call: 500. Second call onward: empty success.
     httpx_mock.add_response(
         method="GET",
-        url=httpx.URL("http://observatory/api/v1/configs/sync", params={}),
+        url=httpx.URL("http://debug-engine/api/v1/configs/sync", params={}),
         status_code=500,
     )
     httpx_mock.add_response(
         method="GET",
-        url=httpx.URL("http://observatory/api/v1/configs/sync", params={}),
+        url=httpx.URL("http://debug-engine/api/v1/configs/sync", params={}),
         json={"events": [], "cursor": "2026-04-10T10:00:00Z"},
     )
 
-    http = httpx.AsyncClient(base_url="http://observatory")
+    http = httpx.AsyncClient(base_url="http://debug-engine")
     registry = AgentConfigRegistry()
     worker = ConfigSyncWorker(
         http=http,
@@ -109,7 +109,7 @@ async def test_sync_worker_survives_http_errors(httpx_mock: HTTPXMock) -> None:
 
 @pytest.mark.asyncio
 async def test_registry_set_and_get() -> None:
-    from rapid_observatory.config_sync import AgentConfigOverride
+    from rapid_debug_engine.config_sync import AgentConfigOverride
 
     registry = AgentConfigRegistry()
     assert registry.get("x", "y") is None

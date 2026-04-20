@@ -1,20 +1,20 @@
-"""FastAPI middleware helpers for the Observatory SDK.
+"""FastAPI middleware helpers for the Debug Engine SDK.
 
 Given a route like `POST /api/requirements/forapis`, the middleware looks up
 the agent registered for that (category, name) pair and enriches every span
-in the request with the Observatory identifiers. This means the existing
+in the request with the Debug Engine identifiers. This means the existing
 `services/otel_observability.py` instrumentation keeps working unchanged —
 the SDK just layers stitching metadata on top.
 
 Usage in `rapid-adk-requirements/main.py`:
 
-    from rapid_observatory import ObservatoryClient
-    from rapid_observatory.middleware import ObservatoryMiddleware
+    from rapid_debug_engine import DebugEngineClient
+    from rapid_debug_engine.middleware import Debug EngineMiddleware
 
-    observatory = ObservatoryClient(...)
+    debug_engine = DebugEngineClient(...)
     app.add_middleware(
-        ObservatoryMiddleware,
-        client=observatory,
+        Debug EngineMiddleware,
+        client=debug_engine,
         # Map HTTP path patterns to (category, name). The keys are regex
         # fragments matched against request.url.path.
         route_map={
@@ -35,7 +35,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from .client import ObservatoryClient
+from .client import DebugEngineClient
 from .tags import enrich_span, set_trace_agent_context
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 RouteMap = dict[str, tuple[str, str | None]]
 
 
-class ObservatoryMiddleware(BaseHTTPMiddleware):
+class Debug EngineMiddleware(BaseHTTPMiddleware):
     """Stitches rapid.* attributes onto every span in a request.
 
     The decision of which agent the request belongs to comes from a
@@ -59,7 +59,7 @@ class ObservatoryMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: Any,
-        client: ObservatoryClient,
+        client: DebugEngineClient,
         route_map: RouteMap,
     ) -> None:
         super().__init__(app)
@@ -78,7 +78,7 @@ class ObservatoryMiddleware(BaseHTTPMiddleware):
         agent_id = self._client.get_agent_id(category, name)
         if agent_id is None:
             logger.debug(
-                "observatory: no cached agent for (%s, %s); skipping enrichment",
+                "debug_engine: no cached agent for (%s, %s); skipping enrichment",
                 category,
                 name,
             )

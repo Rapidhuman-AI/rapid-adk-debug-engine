@@ -1,7 +1,7 @@
 """Shadow-mode support for the Python SDK (M7).
 
 The @shadow_aware decorator wraps an agent invocation so that — when the
-Observatory has an **active dual_invoke experiment** registered for this
+Debug Engine has an **active dual_invoke experiment** registered for this
 agent and this request falls inside the sampled traffic percentage — a
 second invocation runs against the candidate config in an `asyncio.create_task`
 background task.
@@ -9,7 +9,7 @@ background task.
 Primary latency is unaffected: the candidate invocation fires after the
 primary has returned to the caller. Both executions emit OTel spans tagged
 with `shadow.experiment_id` + `shadow.variant=primary|candidate`, which the
-Observatory ingest pairs up post-hoc on the `shadow_experiment_id` FK.
+Debug Engine ingest pairs up post-hoc on the `shadow_experiment_id` FK.
 
 Important guardrails enforced by the backend before an experiment can enter
 `dual_invoke` mode:
@@ -19,7 +19,7 @@ Important guardrails enforced by the backend before an experiment can enter
     - Agent must have an active config (the "primary")
 
 This decorator is deliberately opt-in per call site. The default behavior
-is `simulation` mode, which runs entirely inside the Observatory backend
+is `simulation` mode, which runs entirely inside the Debug Engine backend
 and never touches live traffic.
 """
 
@@ -41,8 +41,8 @@ T = TypeVar("T")
 class ShadowExperimentContext:
     """Minimal context the SDK needs to route a request into a shadow run.
 
-    Populated by the Observatory config-sync payload when a dual_invoke
-    experiment is active. Fields match the Observatory ShadowExperiment
+    Populated by the Debug Engine config-sync payload when a dual_invoke
+    experiment is active. Fields match the Debug Engine ShadowExperiment
     schema 1:1 so the SDK can construct attributes without re-mapping.
     """
 
@@ -53,7 +53,7 @@ class ShadowExperimentContext:
     traffic_percent: int
 
 
-# Module-level registry — populated by ObservatoryClient when the config-sync
+# Module-level registry — populated by DebugEngineClient when the config-sync
 # worker sees a `dual_invoke` experiment. Kept simple so unit tests can set
 # and clear it explicitly.
 _active: dict[str, ShadowExperimentContext] = {}
@@ -114,7 +114,7 @@ def shadow_aware(
                 return primary_result
             if invoke_with_config is None:
                 logger.debug(
-                    "observatory: shadow experiment active but no invoke_with_config provided; skipping candidate"
+                    "debug_engine: shadow experiment active but no invoke_with_config provided; skipping candidate"
                 )
                 return primary_result
 
@@ -128,7 +128,7 @@ def shadow_aware(
                     )
                 except Exception as err:  # noqa: BLE001 — must never crash hot path
                     logger.warning(
-                        "observatory: shadow candidate invocation failed: %s", err
+                        "debug_engine: shadow candidate invocation failed: %s", err
                     )
 
             asyncio.create_task(_candidate())

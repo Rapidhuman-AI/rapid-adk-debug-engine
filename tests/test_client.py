@@ -1,4 +1,4 @@
-"""Tests for ObservatoryClient.register_on_startup() using pytest-httpx."""
+"""Tests for DebugEngineClient.register_on_startup() using pytest-httpx."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from pytest_httpx import HTTPXMock
 
-from rapid_observatory import ObservatoryClient
+from rapid_debug_engine import DebugEngineClient
 
 
 def _seed_agentconfig(root: Path) -> Path:
@@ -34,7 +34,7 @@ async def test_register_on_startup_posts_and_caches_ids(httpx_mock: HTTPXMock, t
 
     httpx_mock.add_response(
         method="POST",
-        url="http://observatory/api/v1/agents/register",
+        url="http://debug-engine/api/v1/agents/register",
         json={
             "deploymentId": "acme",
             "agents": [
@@ -54,8 +54,8 @@ async def test_register_on_startup_posts_and_caches_ids(httpx_mock: HTTPXMock, t
         },
     )
 
-    client = ObservatoryClient(
-        base_url="http://observatory",
+    client = DebugEngineClient(
+        base_url="http://debug-engine",
         api_key="key",
         deployment_id="acme",
         service_name="rapid-adk-requirements",
@@ -81,19 +81,19 @@ async def test_register_on_startup_survives_http_error(httpx_mock: HTTPXMock, tm
     agents_dir = _seed_agentconfig(tmp_path)
     httpx_mock.add_response(
         method="POST",
-        url="http://observatory/api/v1/agents/register",
+        url="http://debug-engine/api/v1/agents/register",
         status_code=500,
         json={"error": "boom"},
     )
 
-    client = ObservatoryClient(
-        base_url="http://observatory",
+    client = DebugEngineClient(
+        base_url="http://debug-engine",
         api_key="key",
         deployment_id="acme",
         service_name="rapid-adk-requirements",
     )
     # Must not raise — the agent service should still boot even if the
-    # Observatory is unreachable.
+    # Debug Engine is unreachable.
     result = await client.register_on_startup(agentconfig_dir=agents_dir)
     assert result == []
     await client.stop()
@@ -101,8 +101,8 @@ async def test_register_on_startup_survives_http_error(httpx_mock: HTTPXMock, tm
 
 @pytest.mark.asyncio
 async def test_register_on_startup_noop_when_no_agents(tmp_path: Path) -> None:
-    client = ObservatoryClient(
-        base_url="http://observatory",
+    client = DebugEngineClient(
+        base_url="http://debug-engine",
         api_key="key",
         deployment_id="acme",
         service_name="svc",
