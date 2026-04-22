@@ -7,6 +7,7 @@ identifiers the Debug Engine backend uses to stitch traces to the registry.
 
 from .client import DebugEngineClient
 from .config_sync import AgentConfigOverride, AgentConfigRegistry
+from .observe import observe
 from .registry import AgentRegistration, ModulesFile
 from .shadow import (
     ShadowExperimentContext,
@@ -22,6 +23,7 @@ __all__ = [
     "AgentConfigRegistry",
     "AgentRegistration",
     "ModulesFile",
+    "observe",
     "ShadowExperimentContext",
     "get_active_experiment",
     "set_active_experiment",
