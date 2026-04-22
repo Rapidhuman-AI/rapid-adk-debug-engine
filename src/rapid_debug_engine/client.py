@@ -217,6 +217,65 @@ class DebugEngineClient:
         except Exception as err:  # noqa: BLE001 — must never raise in hot path
             logger.debug("debug_engine: guardrail ingest failed: %s", err)
 
+    # ─── Upload events (Phase 1/2 metadata) ──────────────────────────────────
+    async def record_upload_event(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        solution: str,
+        phase: str,
+        document_id: str,
+        sha256: str,
+        mime_type: str,
+        size_bytes: int,
+        extracted_by: str,
+        extraction_version: str,
+        lifecycle_state: str,
+        idempotency_key: str,
+        trace_id: str | None = None,
+        confidence: float | None = None,
+    ) -> None:
+        """POST an upload/artifact event to /api/v1/ingest/upload-events.
+
+        Called by solution ADK agents (Phase 2 ProcessDiagram envelope emission,
+        and future extraction wrappers). Fire-and-forget: observability failures
+        must never block the extraction hot path. The server dedupes on
+        (tenantId, idempotencyKey) so re-emitting for the same source material
+        is a no-op and callers can retry freely.
+        """
+        payload: dict[str, Any] = {
+            "tenantId": tenant_id,
+            "projectId": project_id,
+            "solution": solution,
+            "phase": phase,
+            "documentId": document_id,
+            "sha256": sha256,
+            "mimeType": mime_type,
+            "sizeBytes": size_bytes,
+            "extractedBy": extracted_by,
+            "extractionVersion": extraction_version,
+            "lifecycleState": lifecycle_state,
+            "idempotencyKey": idempotency_key,
+        }
+        if trace_id is not None:
+            payload["traceId"] = trace_id
+        if confidence is not None:
+            payload["confidence"] = confidence
+
+        try:
+            response = await self._http.post(
+                "/api/v1/ingest/upload-events", json=payload
+            )
+            if response.status_code >= 400:
+                logger.debug(
+                    "debug_engine: upload-event ingest returned %s: %s",
+                    response.status_code,
+                    response.text[:200],
+                )
+        except Exception as err:  # noqa: BLE001 — must never raise in hot path
+            logger.debug("debug_engine: upload-event ingest failed: %s", err)
+
     async def stop(self) -> None:
         """Clean shutdown. Call from FastAPI lifespan teardown."""
         if self._sync_worker is not None:

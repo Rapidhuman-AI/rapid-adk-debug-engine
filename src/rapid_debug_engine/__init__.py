@@ -32,15 +32,15 @@ __all__ = [
 
 
 def __getattr__(name: str):
-    """Lazy re-export of Debug EngineMiddleware — only imported when requested.
+    """Lazy re-export of DebugEngineMiddleware — only imported when requested.
 
     Starlette (FastAPI's base) is an optional dependency for the SDK; users
     who don't need the middleware helper shouldn't have to install it.
     """
-    if name == "Debug EngineMiddleware":
-        from .middleware import Debug EngineMiddleware
+    if name == "DebugEngineMiddleware":
+        from .middleware import DebugEngineMiddleware
 
-        return Debug EngineMiddleware
+        return DebugEngineMiddleware
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __version__ = "0.1.0"
