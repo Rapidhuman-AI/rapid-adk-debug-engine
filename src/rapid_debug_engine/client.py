@@ -95,7 +95,7 @@ class DebugEngineClient:
 
         Returns the server-side agent list (also cached in self._agent_id_cache).
         """
-        registrations = discover_agents(agentconfig_dir, modules_file)
+        registrations = discover_agents(agentconfig_dir, modules_file, self._service_name)
         if not registrations:
             logger.warning("debug_engine: no agents discovered — nothing to register")
             return []
