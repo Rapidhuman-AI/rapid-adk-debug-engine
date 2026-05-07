@@ -9,11 +9,11 @@ the SDK just layers stitching metadata on top.
 Usage in `rapid-adk-requirements/main.py`:
 
     from rapid_debug_engine import DebugEngineClient
-    from rapid_debug_engine.middleware import Debug EngineMiddleware
+    from rapid_debug_engine.middleware import DebugEngineMiddleware
 
     debug_engine = DebugEngineClient(...)
     app.add_middleware(
-        Debug EngineMiddleware,
+        DebugEngineMiddleware,
         client=debug_engine,
         # Map HTTP path patterns to (category, name). The keys are regex
         # fragments matched against request.url.path.
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 RouteMap = dict[str, tuple[str, str | None]]
 
 
-class Debug EngineMiddleware(BaseHTTPMiddleware):
+class DebugEngineMiddleware(BaseHTTPMiddleware):
     """Stitches rapid.* attributes onto every span in a request.
 
     The decision of which agent the request belongs to comes from a
