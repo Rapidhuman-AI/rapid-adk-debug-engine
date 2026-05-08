@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import httpx
 
@@ -275,6 +275,40 @@ class DebugEngineClient:
                 )
         except Exception as err:  # noqa: BLE001 — must never raise in hot path
             logger.debug("debug_engine: upload-event ingest failed: %s", err)
+
+    # ─── Liveness + agent introspection HTTP routes ──────────────────────────
+    def register_liveness_routes(
+        self,
+        app: Any,
+        agent_tree_provider: Callable[[], Any] | None = None,
+        agentconfig_dir: Path = DEFAULT_AGENTCONFIG_DIR,
+        modules_file: Path = DEFAULT_MODULES_FILE,
+    ) -> None:
+        """Mount /health and /agents/list onto the supplied FastAPI app.
+
+        These let the Debug Engine backend poll the ADK to confirm liveness
+        and pull a current snapshot of every agent the service has. Pass
+        `agent_tree_provider` (any zero-arg callable returning the root
+        Google ADK agent — typically `lambda: ROOT_AGENT`) to expose
+        single-vs-multi-agent composition. Without it, the `agentconfig/`
+        JSON tree is used as a static fallback.
+        """
+        from . import __version__ as sdk_version
+        from .liveness import build_liveness_router
+
+        router = build_liveness_router(
+            service_name=self._service_name,
+            sdk_version=sdk_version,
+            agent_tree_provider=agent_tree_provider,
+            agentconfig_dir=agentconfig_dir,
+            modules_file=modules_file,
+        )
+        app.include_router(router)
+        logger.info(
+            "debug_engine: liveness routes mounted (service=%s, runtime_introspection=%s)",
+            self._service_name,
+            agent_tree_provider is not None,
+        )
 
     async def stop(self) -> None:
         """Clean shutdown. Call from FastAPI lifespan teardown."""
